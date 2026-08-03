@@ -2,8 +2,11 @@ import logging
 import os
 import time
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query, Request
 from tavily import TavilyClient
+
+load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,11 +78,21 @@ def health() -> dict:
 
 
 @app.get("/search")
-def search(q: str = Query(..., description="Search query string")) -> dict:
+def search(
+    q: str = Query(..., description="Search query string"),
+    search_depth: str = Query(
+        "advanced", description="Tavily search depth: 'basic' or 'advanced'"
+    ),
+    include_raw_content: bool = Query(
+        True, description="If true, include the full raw page content (not truncated)"
+    ),
+) -> dict:
     """Perform a search using the Tavily API and return the raw results.
 
     Args:
         q: The search query string.
+        search_depth: Tavily search depth, 'basic' or 'advanced'.
+        include_raw_content: Whether to include the untruncated raw page content.
 
     Returns:
         The full, unmodified response returned by the Tavily client.
@@ -94,7 +107,11 @@ def search(q: str = Query(..., description="Search query string")) -> dict:
     start_time = time.time()
     try:
         logger.debug("Calling Tavily API")
-        results = client.search(query=q)
+        results = client.search(
+            query=q,
+            search_depth=search_depth,
+            include_raw_content=include_raw_content,
+        )
     except Exception as error:
         logger.exception("Tavily request failed for query: %r", q)
         raise HTTPException(status_code=502, detail=f"Tavily request failed: {error}")
