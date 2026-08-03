@@ -126,3 +126,15 @@ def search(
     )
 
     return results
+
+
+@app.get("/debug/{full_path:path}", include_in_schema=False)
+def debug_catch_all(full_path: str, request: Request) -> dict:
+    """Temporary diagnostic route to inspect what path/scope Vercel forwards."""
+    return {
+        "debug": True,
+        "full_path": full_path,
+        "url_path": request.url.path,
+        "url": str(request.url),
+        "headers": dict(request.headers),
+    }
